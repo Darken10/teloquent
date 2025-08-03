@@ -6,42 +6,24 @@
  * PostgreSQL, MySQL et SQLite via knex.js.
  */
 
-// Importer et exporter la classe Model de base
+/**
+ * Point d'entrée principal pour l'ORM Teloquent
+ */
+
 import Model from './Model';
-export { Model };
-
-// Exporter les classes de relations
-import { HasOne, HasMany, BelongsTo, BelongsToMany } from './relations';
-export { HasOne, HasMany, BelongsTo, BelongsToMany };
-
-// Exporter le QueryBuilder
 import QueryBuilder from './QueryBuilder';
-export { QueryBuilder };
+import Collection from './Collection';
+import { Connection } from './utils/connection';
+
+// Exporter les classes principales
+export { Model, QueryBuilder, Collection, Connection };
 
 // Exporter les décorateurs
-import { 
-  Table, 
-  Column, 
-  PrimaryKey, 
-  Timestamps, 
-  SoftDeletes,
-  HasOneRelation,
-  HasManyRelation,
-  BelongsToRelation,
-  BelongsToManyRelation
-} from './decorators';
+export * from './decorators';
+export { Scope } from './decorators/Scope';
 
-export {
-  Table,
-  Column,
-  PrimaryKey,
-  Timestamps,
-  SoftDeletes,
-  HasOneRelation,
-  HasManyRelation,
-  BelongsToRelation,
-  BelongsToManyRelation
-};
+// Exporter les scopes
+export * from './scopes';
 
 // Exporter les utilitaires de migration
 import { Schema, SchemaBuilder } from './utils/schema';

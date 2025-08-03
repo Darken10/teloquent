@@ -9,6 +9,8 @@ import { Knex } from 'knex';
 import Model, { ModelAttributes } from './Model';
 import Collection from './Collection';
 import { Connection } from './utils/connection';
+import { ScopeManager } from './scopes';
+import { isScopeMethod, extractScopeName, getScopeMetadata } from './decorators/Scope';
 
 export default class QueryBuilder<T extends Model> {
   // Modèle associé à ce query builder
@@ -22,6 +24,9 @@ export default class QueryBuilder<T extends Model> {
   
   // Relations à compter
   protected eagerLoadCount: string[] = [];
+  
+  // Scopes globaux exclus de cette requête
+  protected excludedGlobalScopes: (Function | string)[] = [];
 
   /**
    * Constructeur du QueryBuilder
@@ -30,6 +35,26 @@ export default class QueryBuilder<T extends Model> {
   constructor(model: typeof Model) {
     this.model = model;
     this.query = this.getBaseQuery();
+    
+    // Appliquer les scopes globaux
+    this.applyGlobalScopes();
+    
+    // Créer un proxy pour intercepter les appels de méthodes
+    return new Proxy(this, {
+      get: (target, prop, receiver) => {
+        const value = Reflect.get(target, prop, receiver);
+        
+        // Si c'est une propriété existante ou une méthode, la retourner
+        if (prop in target || typeof prop !== 'string') {
+          return value;
+        }
+        
+        // Sinon, vérifier si c'est un scope local
+        return (...args: any[]) => {
+          return target.__call(prop, args);
+        };
+      }
+    }) as any;
   }
 
   /**
@@ -199,6 +224,64 @@ export default class QueryBuilder<T extends Model> {
    */
   public whereNotNull(column: string): this {
     this.query = this.query.whereNotNull(column);
+    return this;
+  }
+  
+  /**
+   * Définit une clause whereHas sur la requête pour filtrer par relation
+   * @param relation Nom de la relation
+   * @param callback Callback pour définir des contraintes sur la relation
+   */
+  public whereHas(relation: string, callback?: (query: QueryBuilder<any>) => void): this {
+    // Récupérer la méthode de relation sur le modèle
+    const model = new this.model() as any;
+    if (typeof model[relation] !== 'function') {
+      throw new Error(`La relation ${relation} n'existe pas sur le modèle ${this.model.name}`);
+    }
+    
+    // Récupérer l'instance de relation
+    const relationInstance = model[relation]();
+    
+    // Créer un query builder pour la relation
+    const relatedQuery = new QueryBuilder(relationInstance.getRelated());
+    
+    // Appliquer le callback si fourni
+    if (callback) {
+      callback(relatedQuery);
+    }
+    
+    // Appliquer la contrainte de relation
+    relationInstance.addConstraints(this, relatedQuery);
+    
+    return this;
+  }
+  
+  /**
+   * Définit une clause whereDoesntHave sur la requête pour filtrer par absence de relation
+   * @param relation Nom de la relation
+   * @param callback Callback pour définir des contraintes sur la relation
+   */
+  public whereDoesntHave(relation: string, callback?: (query: QueryBuilder<any>) => void): this {
+    // Récupérer la méthode de relation sur le modèle
+    const model = new this.model() as any;
+    if (typeof model[relation] !== 'function') {
+      throw new Error(`La relation ${relation} n'existe pas sur le modèle ${this.model.name}`);
+    }
+    
+    // Récupérer l'instance de relation
+    const relationInstance = model[relation]();
+    
+    // Créer un query builder pour la relation
+    const relatedQuery = new QueryBuilder(relationInstance.getRelated());
+    
+    // Appliquer le callback si fourni
+    if (callback) {
+      callback(relatedQuery);
+    }
+    
+    // Appliquer la contrainte de relation avec négation
+    relationInstance.addConstraints(this, relatedQuery, true);
+    
     return this;
   }
 
@@ -411,5 +494,62 @@ export default class QueryBuilder<T extends Model> {
    */
   public getQuery(): Knex.QueryBuilder {
     return this.query;
+  }
+  
+  /**
+   * Applique les scopes globaux au query builder
+   */
+  protected applyGlobalScopes(): void {
+    ScopeManager.applyGlobalScopes(this, this.model, this.excludedGlobalScopes);
+  }
+  
+  /**
+   * Exclut un scope global de la requête
+   * @param scope Le scope global à exclure (classe ou nom)
+   */
+  public withoutGlobalScope(scope: Function | string): this {
+    this.excludedGlobalScopes.push(scope);
+    return this;
+  }
+  
+  /**
+   * Exclut plusieurs scopes globaux de la requête
+   * @param scopes Les scopes globaux à exclure
+   */
+  public withoutGlobalScopes(scopes?: (Function | string)[]): this {
+    if (scopes === undefined) {
+      // Exclure tous les scopes globaux
+      const allScopes = ScopeManager.getGlobalScopes(this.model);
+      this.excludedGlobalScopes = [...Array.from(allScopes.keys())];
+    } else {
+      // Exclure les scopes spécifiés
+      this.excludedGlobalScopes = [...this.excludedGlobalScopes, ...scopes];
+    }
+    
+    return this;
+  }
+  
+  /**
+   * Intercepte les appels de méthodes pour les scopes locaux
+   * 
+   * Cette méthode permet d'utiliser les scopes locaux directement sur le query builder
+   * par exemple: User.query().active().get()
+   */
+  public __call(method: string, args: any[]): any {
+    // Vérifier si c'est un scope local décoré avec @Scope
+    const scopeMetadata = getScopeMetadata(this.model);
+    if (scopeMetadata && scopeMetadata.includes(method)) {
+      // Appliquer le scope local
+      return (this.model as any)[method](this, ...args);
+    }
+    
+    // Vérifier si c'est un scope local avec le préfixe 'scope'
+    const scopeMethodName = `scope${method.charAt(0).toUpperCase()}${method.slice(1)}`;
+    if (typeof (this.model as any)[scopeMethodName] === 'function') {
+      // Appliquer le scope local
+      return (this.model as any)[scopeMethodName](this, ...args);
+    }
+    
+    throw new Error(`La méthode ${method} n'existe pas sur le query builder ou n'est pas un scope valide`);
   }
 }

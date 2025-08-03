@@ -12,6 +12,7 @@ import Collection from './Collection';
 import { Connection } from './utils/connection';
 import { HasOne, HasMany, BelongsTo, BelongsToMany } from './relations';
 import { ModelMetadata, getModelMetadata } from './decorators/metadata';
+import { GlobalScope, GlobalScopeCallback, ScopeManager } from './scopes';
 
 export type ModelAttributes = Record<string, any>;
 export type ModelRelations = Record<string, any>;
@@ -182,8 +183,8 @@ export default abstract class Model {
   /**
    * Récupère le query builder pour ce modèle
    */
-  public static query(): QueryBuilder<any> {
-    return new QueryBuilder(this as any);
+  public static query<T extends typeof Model>(this: T): QueryBuilder<InstanceType<T>> {
+    return new QueryBuilder<InstanceType<T>>(this);
   }
 
   /**
@@ -578,5 +579,40 @@ export default abstract class Model {
    */
   public static newCollection<T extends Model>(models: T[] = []): Collection<T> {
     return new Collection<T>(models);
+  }
+  
+  /**
+   * Ajoute un scope global au modèle
+   * 
+   * @param scope Le scope global ou une fonction de rappel
+   * @param name Le nom du scope (optionnel, requis si scope est une fonction)
+   */
+  public static addGlobalScope<T extends typeof Model>(
+    this: T,
+    scope: GlobalScope | GlobalScopeCallback,
+    name?: string
+  ): void {
+    ScopeManager.addGlobalScope(this, scope, name);
+  }
+  
+  /**
+   * Supprime un scope global du modèle
+   * 
+   * @param scope Le scope global à supprimer (classe ou nom)
+   */
+  public static removeGlobalScope<T extends typeof Model>(
+    this: T,
+    scope: Function | string
+  ): boolean {
+    return ScopeManager.removeGlobalScope(this, scope);
+  }
+  
+  /**
+   * Récupère tous les scopes globaux du modèle
+   */
+  public static getGlobalScopes<T extends typeof Model>(
+    this: T
+  ): Map<string | Function, GlobalScope | GlobalScopeCallback> {
+    return ScopeManager.getGlobalScopes(this);
   }
 }
