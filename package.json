@@ -7,6 +7,42 @@
   "bin": {
     "teloquent": "./dist/cli/index.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./decorators": {
+      "types": "./dist/decorators/index.d.ts",
+      "require": "./dist/decorators/index.js",
+      "default": "./dist/decorators/index.js"
+    },
+    "./migrations": {
+      "types": "./dist/migrations/index.d.ts",
+      "require": "./dist/migrations/index.js",
+      "default": "./dist/migrations/index.js"
+    },
+    "./relations": {
+      "types": "./dist/relations/index.d.ts",
+      "require": "./dist/relations/index.js",
+      "default": "./dist/relations/index.js"
+    },
+    "./scopes": {
+      "types": "./dist/scopes/index.d.ts",
+      "require": "./dist/scopes/index.js",
+      "default": "./dist/scopes/index.js"
+    },
+    "./cli": "./dist/cli/index.js"
+  },
+  "typesVersions": {
+    "*": {
+      "decorators": ["dist/decorators/index.d.ts"],
+      "migrations": ["dist/migrations/index.d.ts"],
+      "relations": ["dist/relations/index.d.ts"],
+      "scopes": ["dist/scopes/index.d.ts"]
+    }
+  },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
