@@ -1,6 +1,6 @@
 {
   "name": "teloquent",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "An Eloquent-inspired ORM for TypeScript with PostgreSQL, MySQL and SQLite support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,10 +37,18 @@
   },
   "typesVersions": {
     "*": {
-      "decorators": ["dist/decorators/index.d.ts"],
-      "migrations": ["dist/migrations/index.d.ts"],
-      "relations": ["dist/relations/index.d.ts"],
-      "scopes": ["dist/scopes/index.d.ts"]
+      "decorators": [
+        "dist/decorators/index.d.ts"
+      ],
+      "migrations": [
+        "dist/migrations/index.d.ts"
+      ],
+      "relations": [
+        "dist/relations/index.d.ts"
+      ],
+      "scopes": [
+        "dist/scopes/index.d.ts"
+      ]
     }
   },
   "scripts": {
