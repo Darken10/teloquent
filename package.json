@@ -1,6 +1,6 @@
 {
   "name": "teloquent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An Eloquent-inspired ORM for TypeScript with PostgreSQL, MySQL and SQLite support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
