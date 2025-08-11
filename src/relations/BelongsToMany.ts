@@ -5,7 +5,8 @@
  * utilisant une table pivot pour stocker les associations.
  */
 
-import { Knex } from 'knex';
+// Définir le type KnexQuery localement pour éviter les problèmes d'importation
+type KnexQuery = any;
 import Model from '../Model';
 import QueryBuilder from '../QueryBuilder';
 import Relation from './Relation';
@@ -239,7 +240,7 @@ export default class BelongsToMany<T extends Model> extends Relation<T> {
     
     // Convertir les résultats en dictionnaire
     const counts: Record<string, number> = {};
-    results.forEach(result => {
+    results.forEach((result: Record<string, any>) => {
       counts[result[this.foreignPivotKey]] = Number(result.count);
     });
     
@@ -269,7 +270,7 @@ export default class BelongsToMany<T extends Model> extends Relation<T> {
   /**
    * Récupère le query builder pour la table pivot
    */
-  protected getPivotQuery(): Knex.QueryBuilder {
+  protected getPivotQuery(): KnexQuery {
     const connection = (this.related as any).getConnection();
     return connection.table(this.table);
   }

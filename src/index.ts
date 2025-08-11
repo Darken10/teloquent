@@ -30,8 +30,8 @@ import { Schema, SchemaBuilder } from './utils/schema';
 export { Schema, SchemaBuilder };
 
 // Exporter les utilitaires de connexion à la base de données
-import { Connection, ConnectionConfig } from './utils/connection';
-export { Connection, ConnectionConfig };
+import { ConnectionConfig } from './utils/connection';
+export { ConnectionConfig };
 
 // Version du package
 export const VERSION = '1.0.0';

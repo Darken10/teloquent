@@ -111,7 +111,7 @@ export class Collection<T extends Model> {
    * Transforme les éléments de la collection
    * @param callback Fonction de transformation
    */
-  public map<U>(callback: (item: T, index: number) => U): Collection<U> {
+  public map<U extends Model>(callback: (item: T, index: number) => U): Collection<U> {
     return new Collection<U>(this.items.map(callback));
   }
 
@@ -238,8 +238,8 @@ export class Collection<T extends Model> {
    * Extrait une liste de valeurs pour une clé donnée
    * @param key Clé à extraire
    */
-  public pluck<K extends keyof T>(key: K): Collection<T[K]> {
-    return this.map(item => item[key]);
+  public pluck<K extends keyof T>(key: K): Collection<any> {
+    return new Collection<any>(this.items.map(item => item[key]));
   }
 
   /**
@@ -262,14 +262,14 @@ export class Collection<T extends Model> {
    * Retourne un tableau des valeurs uniques pour une clé donnée
    * @param key Clé à extraire
    */
-  public unique<K extends keyof T>(key: K): Collection<T[K]> {
-    const uniqueValues = new Set<T[K]>();
+  public unique<K extends keyof T>(key: K): Collection<any> {
+    const uniqueValues = new Set<any>();
     
     this.each((item) => {
       uniqueValues.add(item[key]);
     });
     
-    return new Collection<T[K]>(Array.from(uniqueValues));
+    return new Collection<any>(Array.from(uniqueValues));
   }
 
   /**
@@ -337,8 +337,8 @@ export class Collection<T extends Model> {
    * Divise la collection en plusieurs collections de taille spécifiée
    * @param size Taille des chunks
    */
-  public chunk(size: number): Collection<Collection<T>> {
-    const chunks = new Collection<Collection<T>>();
+  public chunk(size: number): any[] {
+    const chunks: Collection<T>[] = [];
     
     for (let i = 0; i < this.items.length; i += size) {
       chunks.push(new Collection<T>(this.items.slice(i, i + size)));
@@ -350,8 +350,8 @@ export class Collection<T extends Model> {
   /**
    * Fusionne les éléments de la collection en un seul tableau
    */
-  public flatten<U>(): Collection<U> {
-    const result: U[] = [];
+  public flatten(): Collection<any> {
+    const result: any[] = [];
     
     this.each((item: any) => {
       if (Array.isArray(item)) {
@@ -361,7 +361,7 @@ export class Collection<T extends Model> {
       }
     });
     
-    return new Collection<U>(result);
+    return new Collection<any>(result);
   }
 
   /**

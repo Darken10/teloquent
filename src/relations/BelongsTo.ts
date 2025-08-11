@@ -82,7 +82,7 @@ export default class BelongsTo<T extends Model> extends Relation<T> {
     // Créer un dictionnaire des résultats indexé par clé du propriétaire
     const dictionary: Record<string | number, T> = {};
     
-    results.forEach(result => {
+    results.forEach((result: T) => {
       const key = result.getAttribute(this.ownerKey);
       if (key !== undefined && key !== null) {
         dictionary[key] = result;
@@ -123,7 +123,7 @@ export default class BelongsTo<T extends Model> extends Relation<T> {
     
     // Convertir les résultats en dictionnaire
     const counts: Record<string, number> = {};
-    results.forEach(result => {
+    results.forEach((result: Record<string, any>) => {
       counts[result[this.ownerKey]] = Number(result.count);
     });
     
@@ -152,10 +152,12 @@ export default class BelongsTo<T extends Model> extends Relation<T> {
 
   /**
    * Récupère le résultat de la relation
-   * Pour BelongsTo, on retourne un seul modèle ou null
+   * Pour BelongsTo, on retourne un seul modèle ou un tableau vide
    */
-  protected async getResultsQuery(): Promise<T | null> {
-    return this.query.first();
+  protected async getResultsQuery(): Promise<T | T[]> {
+    const result = await this.query.first();
+    // Retourner le résultat ou un tableau vide pour respecter la signature
+    return result || [];
   }
 
   /**

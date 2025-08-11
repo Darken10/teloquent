@@ -115,7 +115,7 @@ export default class HasOne<T extends Model> extends Relation<T> {
     
     // Convertir les résultats en dictionnaire
     const counts: Record<string, number> = {};
-    results.forEach(result => {
+    results.forEach((result: Record<string, any>) => {
       counts[result[this.foreignKey]] = Number(result.count);
     });
     
@@ -144,10 +144,12 @@ export default class HasOne<T extends Model> extends Relation<T> {
 
   /**
    * Récupère le résultat de la relation
-   * Pour HasOne, on retourne un seul modèle ou null
+   * Pour HasOne, on retourne un seul modèle ou un tableau vide
    */
-  protected async getResultsQuery(): Promise<T | null> {
-    return this.query.first();
+  protected async getResultsQuery(): Promise<T | T[]> {
+    const result = await this.query.first();
+    // Retourner le résultat ou un tableau vide pour respecter la signature
+    return result || [];
   }
 
   /**

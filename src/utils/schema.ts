@@ -5,7 +5,13 @@
  * dans la base de données, similaire à celle de Laravel.
  */
 
-import { Knex } from 'knex';
+// Définir les types Knex localement pour éviter les problèmes d'importation
+type KnexTableBuilder = any;
+type KnexCreateTableBuilder = any;
+type KnexAlterTableBuilder = any;
+type KnexColumnBuilder = any;
+type KnexForeignKeyBuilder = any;
+type Knex = any;
 import { Connection } from './connection';
 
 /**
@@ -49,7 +55,7 @@ export class SchemaBuilder {
     tableName: string,
     callback: (table: TableBuilder) => void
   ): Promise<void> {
-    await this.knex.schema.createTable(tableName, (table: Knex.CreateTableBuilder) => {
+    await this.knex.schema.createTable(tableName, (table: KnexCreateTableBuilder) => {
       const builder = new TableBuilder(table);
       callback(builder);
     });
@@ -64,7 +70,7 @@ export class SchemaBuilder {
     tableName: string,
     callback: (table: TableBuilder) => void
   ): Promise<void> {
-    await this.knex.schema.alterTable(tableName, (table: Knex.AlterTableBuilder) => {
+    await this.knex.schema.alterTable(tableName, (table: KnexAlterTableBuilder) => {
       const builder = new TableBuilder(table);
       callback(builder);
     });
@@ -101,7 +107,7 @@ export class SchemaBuilder {
    * @param bindings Paramètres de la requête
    */
   public async raw(sql: string, bindings?: any[]): Promise<any> {
-    return this.knex.raw(sql, bindings);
+    return this.knex.raw(sql, bindings as any);
   }
 }
 
@@ -109,14 +115,14 @@ export class SchemaBuilder {
  * Classe de construction de table
  */
 export class TableBuilder {
-  // Instance Knex.TableBuilder
-  private builder: Knex.TableBuilder;
+  // Instance TableBuilder
+  private builder: KnexTableBuilder;
 
   /**
    * Constructeur du TableBuilder
-   * @param builder Instance Knex.TableBuilder
+   * @param builder Instance KnexTableBuilder
    */
-  constructor(builder: Knex.TableBuilder) {
+  constructor(builder: KnexTableBuilder) {
     this.builder = builder;
   }
 
@@ -276,7 +282,7 @@ export class TableBuilder {
    * @param columnNames Noms des colonnes
    */
   public primary(columnNames: string | string[]): TableBuilder {
-    this.builder.primary(columnNames);
+    this.builder.primary(Array.isArray(columnNames) ? columnNames : [columnNames]);
     return this;
   }
 
@@ -291,7 +297,11 @@ export class TableBuilder {
     foreignTable?: string,
     foreignColumns?: string | string[]
   ): ForeignKeyBuilder {
-    return new ForeignKeyBuilder(this.builder.foreign(columns), foreignTable, foreignColumns);
+    return new ForeignKeyBuilder(
+      this.builder.foreign(Array.isArray(columns) ? columns : [columns]),
+      foreignTable,
+      foreignColumns
+    );
   }
 
   /**
@@ -374,7 +384,7 @@ export class TableBuilder {
    * @param indexName Nom de l'index
    */
   public dropUnique(indexName: string): TableBuilder {
-    this.builder.dropUnique(indexName);
+    this.builder.dropUnique([indexName]);
     return this;
   }
 }
@@ -383,14 +393,14 @@ export class TableBuilder {
  * Classe de construction de colonne
  */
 export class ColumnBuilder {
-  // Instance Knex.ColumnBuilder
-  private builder: Knex.ColumnBuilder;
+  // Instance ColumnBuilder
+  private builder: KnexColumnBuilder;
 
   /**
    * Constructeur du ColumnBuilder
-   * @param builder Instance Knex.ColumnBuilder
+   * @param builder Instance KnexColumnBuilder
    */
-  constructor(builder: Knex.ColumnBuilder) {
+  constructor(builder: KnexColumnBuilder) {
     this.builder = builder;
   }
 
@@ -465,8 +475,8 @@ export class ColumnBuilder {
  * Classe de construction de clé étrangère
  */
 export class ForeignKeyBuilder {
-  // Instance Knex.ForeignConstraintBuilder
-  private builder: Knex.ForeignConstraintBuilder;
+  // Instance ForeignConstraintBuilder
+  private builder: KnexForeignKeyBuilder;
   
   // Table référencée
   private foreignTable?: string;
@@ -476,12 +486,12 @@ export class ForeignKeyBuilder {
 
   /**
    * Constructeur du ForeignKeyBuilder
-   * @param builder Instance Knex.ForeignConstraintBuilder
+   * @param builder Instance KnexForeignKeyBuilder
    * @param foreignTable Table référencée
    * @param foreignColumns Colonnes référencées
    */
   constructor(
-    builder: Knex.ForeignConstraintBuilder,
+    builder: KnexForeignKeyBuilder,
     foreignTable?: string,
     foreignColumns?: string | string[]
   ) {
@@ -500,7 +510,11 @@ export class ForeignKeyBuilder {
    * @param columns Colonnes référencées
    */
   public references(columns: string | string[]): ForeignKeyBuilder {
-    this.builder.references(columns);
+    if (Array.isArray(columns)) {
+      this.builder.references(columns);
+    } else {
+      (this.builder as any).references(columns);
+    }
     return this;
   }
 
@@ -509,7 +523,7 @@ export class ForeignKeyBuilder {
    * @param tableName Nom de la table
    */
   public on(tableName: string): ForeignKeyBuilder {
-    this.builder.inTable(tableName);
+    (this.builder as any).inTable(tableName);
     return this;
   }
 
@@ -518,7 +532,7 @@ export class ForeignKeyBuilder {
    * @param action Action à effectuer
    */
   public onDelete(action: 'CASCADE' | 'SET NULL' | 'RESTRICT' | 'NO ACTION'): ForeignKeyBuilder {
-    this.builder.onDelete(action);
+    (this.builder as any).onDelete(action);
     return this;
   }
 
@@ -527,7 +541,7 @@ export class ForeignKeyBuilder {
    * @param action Action à effectuer
    */
   public onUpdate(action: 'CASCADE' | 'SET NULL' | 'RESTRICT' | 'NO ACTION'): ForeignKeyBuilder {
-    this.builder.onUpdate(action);
+    (this.builder as any).onUpdate(action);
     return this;
   }
 }

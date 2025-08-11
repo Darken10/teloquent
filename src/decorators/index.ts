@@ -11,6 +11,7 @@ import {
   BelongsToRelation, 
   BelongsToManyRelation 
 } from './Relations';
+import { Scope } from './Scope';
 
 export {
   Table,
@@ -21,5 +22,6 @@ export {
   HasOneRelation,
   HasManyRelation,
   BelongsToRelation,
-  BelongsToManyRelation
+  BelongsToManyRelation,
+  Scope
 };

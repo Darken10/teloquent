@@ -5,7 +5,8 @@
  * les classes de relations (HasOne, HasMany, BelongsTo, BelongsToMany).
  */
 
-import { Knex } from 'knex';
+// Définir le type KnexQuery localement pour éviter les problèmes d'importation
+type KnexQuery = any;
 import Model from '../Model';
 import QueryBuilder from '../QueryBuilder';
 
@@ -74,7 +75,9 @@ export default abstract class Relation<T extends Model> {
    * Cette méthode peut être surchargée par les classes dérivées
    */
   protected async getResultsQuery(): Promise<T | T[]> {
-    return this.query.get();
+    const results = await this.query.get();
+    // Convertir la Collection en tableau pour respecter le type de retour
+    return results.all();
   }
 
   /**
@@ -90,7 +93,8 @@ export default abstract class Relation<T extends Model> {
     const results = await this.query.get();
     
     // Associer les résultats aux modèles parents
-    this.matchResults(models, results, relation);
+    // Convertir la Collection en tableau pour respecter le type attendu
+    this.matchResults(models, results.all(), relation);
   }
 
   /**

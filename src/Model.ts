@@ -229,7 +229,9 @@ export default abstract class Model {
     this: T,
     attributes: ModelAttributes
   ): Promise<InstanceType<T>> {
-    const model = new this(attributes) as InstanceType<T>;
+    // Utiliser this comme constructeur pour créer une instance
+    // Le cast est nécessaire car TypeScript ne comprend pas que this est un constructeur
+    const model = new (this as any)(attributes) as InstanceType<T>;
     await model.save();
     return model;
   }
@@ -422,13 +424,13 @@ export default abstract class Model {
     foreignKey?: string,
     localKey?: string
   ): HasOne<InstanceType<T>> {
-    const instance = new HasOne(
+    const instance = new HasOne<InstanceType<T>>(
       related,
       this,
       foreignKey || `${this.constructor.name.toLowerCase()}_id`,
       localKey || this.getPrimaryKey()
     );
-    return instance;
+    return instance as HasOne<InstanceType<T>>;
   }
 
   /**
@@ -442,13 +444,13 @@ export default abstract class Model {
     foreignKey?: string,
     localKey?: string
   ): HasMany<InstanceType<T>> {
-    const instance = new HasMany(
+    const instance = new HasMany<InstanceType<T>>(
       related,
       this,
       foreignKey || `${this.constructor.name.toLowerCase()}_id`,
       localKey || this.getPrimaryKey()
     );
-    return instance;
+    return instance as HasMany<InstanceType<T>>;
   }
 
   /**
@@ -462,15 +464,18 @@ export default abstract class Model {
     foreignKey?: string,
     ownerKey?: string
   ): BelongsTo<InstanceType<T>> {
-    const relatedInstance = new related();
+    // Utiliser le nom de la classe plutôt que d'instancier la classe abstraite
     const foreignKeyName = foreignKey || `${related.name.toLowerCase()}_id`;
-    const instance = new BelongsTo(
+    // Utiliser la clé primaire par défaut si ownerKey n'est pas fourni
+    const defaultOwnerKey = 'id';
+    
+    const instance = new BelongsTo<InstanceType<T>>(
       related,
       this,
       foreignKeyName,
-      ownerKey || relatedInstance.getPrimaryKey()
+      ownerKey || defaultOwnerKey
     );
-    return instance;
+    return instance as BelongsTo<InstanceType<T>>;
   }
 
   /**
@@ -490,29 +495,34 @@ export default abstract class Model {
     parentKey?: string,
     relatedKey?: string
   ): BelongsToMany<InstanceType<T>> {
-    const relatedInstance = new related();
+    // Utiliser le nom de la table plutôt que d'instancier la classe abstraite
+    const relatedTableName = related.prototype.getTable ? related.prototype.getTable() : related.name.toLowerCase() + 's';
     
     // Déterminer le nom de la table pivot si non fourni
     const table = pivotTable || [
       this.getTable(),
-      relatedInstance.getTable()
+      relatedTableName
     ].sort().join('_');
     
     // Déterminer les noms des clés si non fournis
     const foreignKey = foreignPivotKey || `${this.constructor.name.toLowerCase()}_id`;
-    const relatedKey = relatedPivotKey || `${related.name.toLowerCase()}_id`;
+    const relatedPivotKeyName = relatedPivotKey || `${related.name.toLowerCase()}_id`;
     
-    const instance = new BelongsToMany(
+    // Clés primaires par défaut
+    const defaultParentKey = this.getPrimaryKey();
+    const defaultRelatedKey = 'id';
+    
+    const instance = new BelongsToMany<InstanceType<T>>(
       related,
       this,
       table,
       foreignKey,
-      relatedKey,
-      parentKey || this.getPrimaryKey(),
-      relatedKey || relatedInstance.getPrimaryKey()
+      relatedPivotKeyName,
+      parentKey || defaultParentKey,
+      relatedKey || defaultRelatedKey
     );
     
-    return instance;
+    return instance as BelongsToMany<InstanceType<T>>;
   }
 
   /**

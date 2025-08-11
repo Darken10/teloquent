@@ -118,7 +118,7 @@ export default class HasMany<T extends Model> extends Relation<T> {
     
     // Convertir les résultats en dictionnaire
     const counts: Record<string, number> = {};
-    results.forEach(result => {
+    results.forEach((result: Record<string, any>) => {
       counts[result[this.foreignKey]] = Number(result.count);
     });
     

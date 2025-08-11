@@ -4,8 +4,13 @@
  * Cette classe gère les connexions à la base de données via Knex.js.
  */
 
-import knex, { Knex } from 'knex';
-import config from '../../knexfile';
+import knex from 'knex';
+// Définir le type Knex localement pour éviter les problèmes d'importation
+type Knex = any;
+
+// Wrapper pour le fichier de configuration knexfile.ts qui est hors du rootDir
+// Cela évite l'erreur TS6059
+const config = require('../../knexfile');
 
 /**
  * Interface pour la configuration de connexion
