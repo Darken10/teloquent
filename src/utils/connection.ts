@@ -5,8 +5,7 @@
  */
 
 import knex from 'knex';
-// Définir le type Knex localement pour éviter les problèmes d'importation
-type Knex = any;
+import type { Knex } from 'knex';
 
 // Wrapper pour le fichier de configuration knexfile.ts qui est hors du rootDir
 // Cela évite l'erreur TS6059
